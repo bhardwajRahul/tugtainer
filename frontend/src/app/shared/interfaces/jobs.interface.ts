@@ -30,6 +30,14 @@ export interface IJob extends IJobBase {
   log?: string[];
 }
 
+/**
+ * Job progress socket event
+ */
+export interface IJobProgressEvent {
+  host_id: number;
+  state: IHostState;
+}
+
 export interface IHostState {
   status: EJobStatus;
   current?: IJob | null;

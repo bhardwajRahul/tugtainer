@@ -129,8 +129,8 @@ class AuthOidcProvider(AuthProvider):
         response.status_code = status.HTTP_200_OK
         return response
 
-    async def is_authorized(self, request: Request) -> Literal[True]:
-        token = request.cookies.get("access_token")
+    async def is_authorized(self, cookies: dict[str, str]) -> Literal[True]:
+        token = cookies.get("access_token")
         if not token:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

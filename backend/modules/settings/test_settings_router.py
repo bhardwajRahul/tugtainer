@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from pytest_mock import MockerFixture
 
 from backend.app import app
-from backend.modules.auth.auth_util import is_authorized
+from backend.modules.auth.auth_util import is_authorized_req
 from backend.modules.settings.settings_constants import TEST_NOTIFICATION_RESULTS
 
 base_module = "backend.modules.settings.settings_router"
@@ -13,11 +13,11 @@ base_module = "backend.modules.settings.settings_router"
 client = TestClient(app)
 
 
-async def override_is_authorized():
+async def override_is_authorized_req():
     return True
 
 
-app.dependency_overrides[is_authorized] = override_is_authorized
+app.dependency_overrides[is_authorized_req] = override_is_authorized_req
 
 
 def _body(urls: str = "https://example.com/hook") -> dict[str, str]:

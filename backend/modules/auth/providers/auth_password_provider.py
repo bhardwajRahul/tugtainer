@@ -108,8 +108,8 @@ class AuthPasswordProvider(AuthProvider):
         response.status_code = status.HTTP_200_OK
         return response
 
-    async def is_authorized(self, request: Request) -> Literal[True]:
-        token = request.cookies.get("access_token")
+    async def is_authorized(self, cookies: dict[str, str]) -> Literal[True]:
+        token = cookies.get("access_token")
         if not token:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -146,7 +146,7 @@ class AuthPasswordProvider(AuthProvider):
             return write_and_return()
 
         # Just verify authorization; will raise HTTPException if invalid
-        await self.is_authorized(request)
+        await self.is_authorized(request.cookies)
         return write_and_return()
 
     def is_password_set(self) -> bool:

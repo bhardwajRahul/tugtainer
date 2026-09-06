@@ -15,9 +15,9 @@ from backend.util.delay_to_minimum import delay_to_minimum
 from .auth_schemas import PasswordSetRequestBody
 from .auth_util import (
     AUTH_PASSWORD_PROVIDER,
-    active_auth_provider,
     auth_provider_by_name,
-    is_authorized,
+    get_active_auth_provider_by_req,
+    is_authorized_req,
 )
 from .providers.auth_provider import AuthProvider
 
@@ -62,12 +62,10 @@ async def login(
 async def refresh(
     request: Request,
     response: Response,
-    provider: AuthProvider | None = Depends(active_auth_provider),
+    provider: AuthProvider | None = Depends(get_active_auth_provider_by_req),
 ):
     if not provider:
-        raise HTTPException(
-            status.HTTP_401_UNAUTHORIZED, "Unauthorized"
-        )
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Unauthorized")
     return await provider.refresh(request, response)
 
 
@@ -75,7 +73,7 @@ async def refresh(
 async def logout(
     request: Request,
     response: Response,
-    provider: AuthProvider | None = Depends(active_auth_provider),
+    provider: AuthProvider | None = Depends(get_active_auth_provider_by_req),
 ):
     if provider:
         return await provider.logout(request, response)
@@ -87,8 +85,8 @@ async def logout(
     description="Check if session is authorized",
     response_model=bool,
 )
-async def is_authorized_req(
-    _=Depends(is_authorized),
+async def is_authorized(
+    _=Depends(is_authorized_req),
 ):
     return PlainTextResponse(status_code=status.HTTP_200_OK)
 
@@ -97,9 +95,7 @@ async def is_authorized_req(
     path="/set_password",
     description="Set password for web UI. Password can be set only if password is not set yet or if user is authorized.",
 )
-async def set_password(
-    request: Request, payload: PasswordSetRequestBody
-):
+async def set_password(request: Request, payload: PasswordSetRequestBody):
     return await AUTH_PASSWORD_PROVIDER.set_password(request, payload)
 
 
@@ -112,9 +108,7 @@ def is_password_set() -> bool:
     return AUTH_PASSWORD_PROVIDER.is_password_set()
 
 
-@auth_router.get(
-    path="/{provider}/login", description="Login with provider"
-)
+@auth_router.get(path="/{provider}/login", description="Login with provider")
 async def provider_login(
     request: Request,
     response: Response,

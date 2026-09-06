@@ -12,7 +12,7 @@ from backend.core.notifications_core import send_job_notification
 from backend.db.session import get_async_session
 from backend.enums.cron_jobs_enum import ECronJob
 from backend.exception import TugNotificationException
-from backend.modules.auth.auth_util import is_authorized
+from backend.modules.auth.auth_util import is_authorized_req
 
 from .settings_constants import TEST_NOTIFICATION_RESULTS
 from .settings_enum import ESettingKey
@@ -34,7 +34,7 @@ VALID_TIMEZONES = available_timezones()
 settings_router = APIRouter(
     prefix="/settings",
     tags=["settings"],
-    dependencies=[Depends(is_authorized)],
+    dependencies=[Depends(is_authorized_req)],
 )
 
 

@@ -11,6 +11,7 @@ from backend.core.agent_client import (
 )
 from backend.core.cron_manager import schedule_jobs_on_init
 from backend.core.jobs.jobs_log import install_job_log_handler
+from backend.core.socket_manager import socket_manager
 from backend.exception import TugAgentClientError
 from backend.modules.auth.auth_router import (
     auth_router as auth_router,
@@ -70,6 +71,8 @@ app.include_router(public_router)
 app.include_router(settings_router)
 app.include_router(images_router)
 app.include_router(hosts_router)
+
+socket_manager.init_socket(app)
 
 
 @app.exception_handler(ClientError)

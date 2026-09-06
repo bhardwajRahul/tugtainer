@@ -19,7 +19,7 @@ from backend.core.jobs.jobs_schemas import AllHostsState, HostState, JobKind
 from backend.core.jobs.jobs_util import ALL_HOSTS_CACHE_KEY, get_host_cache_key
 from backend.core.jobs.update.update_all import update_all_hosts
 from backend.db.session import get_async_session
-from backend.modules.auth.auth_util import is_authorized
+from backend.modules.auth.auth_util import is_authorized_req
 from backend.modules.hosts.hosts_model import HostsModel
 from backend.modules.hosts.hosts_util import get_host
 from shared.schemas.container_schemas import (
@@ -42,7 +42,7 @@ from .containers_util import (
 containers_router = APIRouter(
     prefix="/containers",
     tags=["containers"],
-    dependencies=[Depends(is_authorized)],
+    dependencies=[Depends(is_authorized_req)],
 )
 
 

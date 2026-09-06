@@ -22,16 +22,7 @@ import {
 import { computed, effect, inject } from '@angular/core';
 import { HostsApiService } from './hosts-api.service';
 import { ToastService } from 'src/app/core/services/toast.service';
-import {
-  EMPTY,
-  interval,
-  mergeMap,
-  Observable,
-  pipe,
-  startWith,
-  switchMap,
-  tap,
-} from 'rxjs';
+import { EMPTY, mergeMap, Observable, pipe, switchMap, tap } from 'rxjs';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -52,6 +43,7 @@ import {
   IJobsProgressDialogSource,
   JobsProgressDialogComponent,
 } from '@shared/components/jobs-progress-dialog/jobs-progress-dialog.component';
+import { SocketService } from '../../core/services/socket.service';
 
 interface IHostsStore {
   loading: THostsLoading;
@@ -107,7 +99,9 @@ export const HostsStore = signalStore(
      * If global action (check/update) is active
      */
     globalActionActive: computed<boolean>(() => {
-      return isHostBusy(store.globalJobState());
+      if (isHostBusy(store.globalJobState())) return true;
+      const hosts = store.entities();
+      return hosts.some((h) => isHostBusy(h.jobState));
     }),
   })),
   withMethods((store) => {
@@ -347,24 +341,32 @@ export const HostsStore = signalStore(
       }
     };
 
-    const pollHostState = rxMethod<number | null>(
+    const loadHostState = rxMethod<number | null>(
       pipe(
         switchMap((hostId) => {
           if (!hostId) {
             return EMPTY;
           }
-          return interval(1000).pipe(
-            startWith(0),
-            switchMap(() =>
-              containersApiService.hostState(hostId).pipe(
-                tapResponse({
-                  next: (jobState) => applyHostState(hostId, jobState),
-                  error: () => undefined,
-                }),
-              ),
-            ),
+          return containersApiService.hostState(hostId).pipe(
+            tapResponse({
+              next: (jobState) => applyHostState(hostId, jobState),
+              error: () => undefined,
+            }),
           );
         }),
+      ),
+    );
+
+    const socketService = inject(SocketService);
+    const watchSocketProgress = rxMethod<void>(
+      pipe(
+        switchMap(() =>
+          socketService.jobProgress$.pipe(
+            tap((event) => {
+              applyHostState(event.host_id, event.state);
+            }),
+          ),
+        ),
       ),
     );
 
@@ -571,16 +573,18 @@ export const HostsStore = signalStore(
        */
       openJobProgressDialog,
       /**
-       * Poll unified host job state while a host is selected
+       * Load unified host job state while a host is selected
        */
-      pollHostState,
+      loadHostState,
+      watchSocketProgress,
     };
   }),
   withHooks({
     onInit: (store) => {
       effect(() => {
-        store.pollHostState(store.selectedId());
+        store.loadHostState(store.selectedId());
       });
+      store.watchSocketProgress();
     },
   }),
 );
