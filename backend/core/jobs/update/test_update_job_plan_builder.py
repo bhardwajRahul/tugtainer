@@ -28,12 +28,14 @@ class DummyDB:
         update_enabled=True,
         delay_update_for=None,
         remote_digests_changed_at=None,
+        healthcheck_timeout=None,
     ):
         self.name = name
         self.update_available = update_available
         self.update_enabled = update_enabled
         self.delay_update_for = delay_update_for
         self.remote_digests_changed_at = remote_digests_changed_at
+        self.healthcheck_timeout = healthcheck_timeout
 
 
 def _patch_common(mocker, db_list, deps, *, settings=None):

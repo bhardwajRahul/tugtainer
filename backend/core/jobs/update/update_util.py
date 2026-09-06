@@ -11,6 +11,7 @@ from backend.db.session import async_session_maker
 from backend.modules.containers.containers_model import (
     ContainersModel,
 )
+from backend.modules.hosts.hosts_model import HostsModel
 from backend.util.now import now
 from shared.schemas.network_schemas import NetworkDisconnectBodySchema
 
@@ -128,3 +129,12 @@ def get_compose_id(c: ContainerInspectResult) -> str | None:
     if proj or fil:
         return f"{proj}:{fil}"
     return None
+
+
+def get_container_healthcheck_timeout(
+    host: HostsModel, container: ContainersModel | None
+) -> int:
+    """Get the effective healthcheck timeout for a container."""
+    if container and container.healthcheck_timeout is not None:
+        return container.healthcheck_timeout
+    return host.container_hc_timeout

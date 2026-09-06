@@ -23,7 +23,11 @@ from backend.modules.settings.settings_enum import ESettingKey
 from backend.modules.settings.settings_storage import SettingsStorage
 from backend.util.now import now
 
-from .update_util import get_compose_id, get_dependencies
+from .update_util import (
+    get_compose_id,
+    get_container_healthcheck_timeout,
+    get_dependencies,
+)
 
 
 @dataclass
@@ -31,12 +35,13 @@ class UpdateJobPlan:
     to_update: set[str]
     affected: set[str]
     order: list[str]
+    healthcheck_timeouts: dict[str, int]
 
 
 async def build_update_job_plan(
     host: HostsModel,
     containers: Sequence[ContainerInspectResult],
-    manual_for: Sequence[ContainerInspectResult] = [],
+    manual_for: Sequence[ContainerInspectResult] | None = None,
 ) -> UpdateJobPlan:
     """
     Get update plan for the given containers.
@@ -44,6 +49,8 @@ async def build_update_job_plan(
     :param containers: containers to process
     :param manual_for: override updatable containers (for manual runs)
     """
+    if manual_for is None:
+        manual_for = []
     update_only_running: Final = SettingsStorage.get(ESettingKey.UPDATE_ONLY_RUNNING)
     global_delay: Final = SettingsStorage.get(ESettingKey.DELAY_UPDATE_FOR)
     async with async_session_maker() as session:
@@ -168,13 +175,18 @@ async def build_update_job_plan(
     # endregion
 
     # filter only existing
-    all_names = {c.name for c in containers}
+    all_names = {cast(str, c.name) for c in containers}
     to_update &= all_names
     affected &= all_names
     order = [item for item in order if item in all_names]
+    healthcheck_timeouts = {
+        c_name: get_container_healthcheck_timeout(host, containers_db.get(c_name))
+        for c_name in all_names
+    }
 
     return UpdateJobPlan(
         to_update=to_update,
         affected=affected,
         order=order,
+        healthcheck_timeouts=healthcheck_timeouts,
     )

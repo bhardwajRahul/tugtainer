@@ -40,6 +40,7 @@ import { ContainersStore } from '../containers/containers.store';
 import { InspectComponent } from '@shared/components/inspect/inspect.component';
 import { SettingsStore } from '../settings/settings.store';
 import { ESettingKey } from '../settings/settings.interface';
+import { DividerModule } from 'primeng/divider';
 
 @Component({
   selector: 'app-container-card',
@@ -65,6 +66,7 @@ import { ESettingKey } from '../settings/settings.interface';
     BooleanFieldComponent,
     DayjsPipe,
     InspectComponent,
+    DividerModule,
   ],
   templateUrl: './container-card.component.html',
   styleUrl: './container-card.component.scss',
@@ -147,6 +149,14 @@ export class ContainerCardComponent implements OnDestroy {
     const value = settings[ESettingKey.DELAY_UPDATE_FOR]?.value;
     return value === undefined || value === null ? '' : String(value);
   });
+  /**
+   * Placeholder showing the host's container_hc_timeout value
+   */
+  protected readonly globalHealthcheckTimeoutPlaceholder = computed(() => {
+    const host = this.containersStore.host();
+    const value = host?.container_hc_timeout;
+    return value === undefined || value === null ? '' : String(value);
+  });
 
   constructor() {
     this.activatedRoute.params
@@ -171,6 +181,10 @@ export class ContainerCardComponent implements OnDestroy {
 
   protected onDelayUpdateForChange(value: number | null): void {
     this.patchContainer({ delay_update_for: value ?? null });
+  }
+
+  protected onHealthcheckTimeoutChange(value: number | null): void {
+    this.patchContainer({ healthcheck_timeout: value ?? null });
   }
 
   protected onCheck(): void {

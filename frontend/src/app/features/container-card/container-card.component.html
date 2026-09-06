@@ -29,26 +29,6 @@
     <p-accordion-content>
       @if (containersStore.selected(); as _item) {
         <section class="general-content">
-          <app-boolean-field>
-            <p-toggle-switch
-              inputId="container-check-enabled"
-              [ngModel]="_item.check_enabled"
-              (ngModelChange)="patchContainer({ check_enabled: $event })"></p-toggle-switch>
-            <label for="container-check-enabled">
-              {{ 'CONTAINERS.CHECK_ENABLED' | translate }}
-            </label>
-          </app-boolean-field>
-          @if (!_item.protected) {
-            <app-boolean-field>
-              <p-toggle-switch
-                inputId="container-update-enabled"
-                [ngModel]="_item.update_enabled"
-                (ngModelChange)="patchContainer({ update_enabled: $event })"></p-toggle-switch>
-              <label for="container-update-enabled">
-                {{ 'CONTAINERS.UPDATE_ENABLED' | translate }}
-              </label>
-            </app-boolean-field>
-          }
           <section class="general-content-state">
             @if (_item.protected) {
               <p-tag
@@ -79,18 +59,79 @@
           </section>
 
           @if (sourceUrl()) {
-            <div style="flex-basis: 100%;">
-              <p-button
-                class="general-content-source"
-                [label]="'CONTAINERS.SOURCE_CODE' | translate"
-                [pTooltip]="'CONTAINERS.SOURCE_CODE_HINT' | translate"
-                icon="pi pi-external-link"
-                iconPos="right"
-                severity="secondary"
-                [outlined]="true"
-                (onClick)="openSource()"></p-button>
-            </div>
+            <p-button
+              class="general-content-source"
+              [label]="'CONTAINERS.SOURCE_CODE' | translate"
+              [pTooltip]="'CONTAINERS.SOURCE_CODE_HINT' | translate"
+              icon="pi pi-external-link"
+              iconPos="right"
+              severity="secondary"
+              [outlined]="true"
+              (onClick)="openSource()"></p-button>
           }
+
+          <p-divider></p-divider>
+
+          <app-boolean-field>
+            <p-toggle-switch
+              inputId="container-check-enabled"
+              [ngModel]="_item.check_enabled"
+              (ngModelChange)="patchContainer({ check_enabled: $event })"></p-toggle-switch>
+            <label for="container-check-enabled">
+              {{ 'CONTAINERS.CHECK_ENABLED' | translate }}
+            </label>
+          </app-boolean-field>
+          @if (!_item.protected) {
+            <app-boolean-field>
+              <p-toggle-switch
+                inputId="container-update-enabled"
+                [ngModel]="_item.update_enabled"
+                (ngModelChange)="patchContainer({ update_enabled: $event })"></p-toggle-switch>
+              <label for="container-update-enabled">
+                {{ 'CONTAINERS.UPDATE_ENABLED' | translate }}
+              </label>
+            </app-boolean-field>
+          }
+
+          <p-ifta-label [style.width.%]="100">
+            <p-iconfield>
+              <p-input-number
+                fluid
+                inputId="container-delay-update-for"
+                [ngModel]="_item.delay_update_for"
+                [showClear]="true"
+                [min]="0"
+                [placeholder]="globalDelayPlaceholder()"
+                (ngModelChange)="onDelayUpdateForChange($event)"></p-input-number>
+              <p-inputicon
+                class="pi pi-question-circle"
+                [pTooltip]="'CONTAINERS.DELAY_UPDATE_FOR_HINT' | translate"></p-inputicon>
+            </p-iconfield>
+            <label for="container-delay-update-for">
+              {{ 'CONTAINERS.DELAY_UPDATE_FOR' | translate }}
+            </label>
+          </p-ifta-label>
+
+          <p-ifta-label [style.width.%]="100">
+            <p-iconfield>
+              <p-input-number
+                fluid
+                inputId="container-healthcheck-timeout"
+                [ngModel]="_item.healthcheck_timeout"
+                [showClear]="true"
+                [min]="0"
+                [placeholder]="globalHealthcheckTimeoutPlaceholder()"
+                (ngModelChange)="onHealthcheckTimeoutChange($event)"></p-input-number>
+              <p-inputicon
+                class="pi pi-question-circle"
+                [pTooltip]="'CONTAINERS.HEALTHCHECK_TIMEOUT_HINT' | translate"></p-inputicon>
+            </p-iconfield>
+            <label for="container-healthcheck-timeout">
+              {{ 'CONTAINERS.HEALTHCHECK_TIMEOUT' | translate }}
+            </label>
+          </p-ifta-label>
+
+          <p-divider></p-divider>
 
           <p-ifta-label>
             <input
@@ -160,25 +201,6 @@
               [value]="itemPorts()"></textarea>
             <label for="container-ports">
               {{ 'CONTAINERS.PORTS' | translate }}
-            </label>
-          </p-ifta-label>
-
-          <p-ifta-label style="width: 100%">
-            <p-iconfield>
-              <p-input-number
-                fluid
-                inputId="container-delay-update-for"
-                [ngModel]="_item.delay_update_for"
-                [showClear]="true"
-                [min]="0"
-                [placeholder]="globalDelayPlaceholder()"
-                (ngModelChange)="onDelayUpdateForChange($event)"></p-input-number>
-              <p-inputicon
-                class="pi pi-question-circle"
-                [pTooltip]="'CONTAINERS.DELAY_UPDATE_FOR_HINT' | translate"></p-inputicon>
-            </p-iconfield>
-            <label for="container-delay-update-for">
-              {{ 'CONTAINERS.DELAY_UPDATE_FOR' | translate }}
             </label>
           </p-ifta-label>
 

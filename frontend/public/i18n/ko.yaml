@@ -172,6 +172,10 @@ CONTAINERS:
   DELAY_UPDATE_FOR_HINT: |-
     이 컨테이너에 대한 전역 지연 재정의(초). 비우면 전역 설정을 사용합니다.
     예: 86400 = 1일. 수동 업데이트는 지연을 무시합니다.
+  HEALTHCHECK_TIMEOUT: 상태 확인 시간 제한(초)
+  HEALTHCHECK_TIMEOUT_HINT: |-
+    이 컨테이너의 기본 상태 확인 시간 제한을 재정의합니다(초).
+    비워두면 호스트 설정을 사용합니다.
   PREVIOUS_IMAGE: 이전 이미지
   PREVIOUS_IMAGE_HINT: |-
     컨테이너가 마지막 업데이트 전에 사용하던 이미지입니다.

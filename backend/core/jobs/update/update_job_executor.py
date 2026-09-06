@@ -200,7 +200,7 @@ async def execute_update_job(
         healthy, container = await wait_for_container_healthy(
             client,
             item.container,
-            host.container_hc_timeout,
+            plan.healthcheck_timeouts[item.name],
         )
         item.container = container
         if healthy:
@@ -283,7 +283,7 @@ async def execute_update_job(
                     healthy, container = await wait_for_container_healthy(
                         client,
                         item.container,
-                        host.container_hc_timeout,
+                        plan.healthcheck_timeouts[item.name],
                     )
                     item.container = container
                     if healthy:
@@ -373,7 +373,7 @@ async def execute_update_job(
                     healthy, container = await wait_for_container_healthy(
                         client,
                         item.container,
-                        host.container_hc_timeout,
+                        plan.healthcheck_timeouts[item.name],
                     )
                     item.container = container
                     if healthy:

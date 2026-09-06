@@ -167,8 +167,12 @@ CONTAINERS:
   REMOTE_DIGESTS_CHANGED_AT: 远程摘要变更于
   DELAY_UPDATE_FOR: 更新前延迟（秒）
   DELAY_UPDATE_FOR_HINT: |-
-    为此容器覆盖全局延迟（秒）。留空 = 使用全局设置。
-    示例：86400 = 1 天。手动更新会忽略延迟。
+    覆盖此容器的全局延迟（秒）。空 = 使用全局设置。
+    示例：86400 = 1天。手动更新将忽略延迟。
+  HEALTHCHECK_TIMEOUT: 容器健康检查超时，以秒为单位
+  HEALTHCHECK_TIMEOUT_HINT: |-
+    覆盖此容器的全局健康检查超时（秒）。
+    空 = 使用全局设置。
   PREVIOUS_IMAGE: 上一个镜像
   PREVIOUS_IMAGE_HINT: |-
     容器上次更新前所使用的镜像。

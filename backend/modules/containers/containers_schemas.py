@@ -59,6 +59,9 @@ class ContainersListItem(BaseModel):
     delay_update_for: int | None = (
         None  # Per-container delay override (seconds); None = use global
     )
+    healthcheck_timeout: int | None = (
+        None  # Per-container healthcheck timeout override (seconds); None = use host's
+    )
     # Image the container ran before the last successful update.
     # Digests pin the exact image, tags/version are informational.
     previous_image_digests: list[str] | None = None
@@ -103,6 +106,7 @@ class ContainersListItem(BaseModel):
                     "updated_at": db_cont.updated_at,
                     "remote_digests_changed_at": db_cont.remote_digests_changed_at,
                     "delay_update_for": db_cont.delay_update_for,
+                    "healthcheck_timeout": db_cont.healthcheck_timeout,
                     "previous_image_digests": db_cont.previous_image_digests,
                     "previous_image_tags": db_cont.previous_image_tags,
                     "previous_image_version": db_cont.previous_image_version,
@@ -123,6 +127,7 @@ class ContainerPatchRequestBody(BaseModel):
     check_enabled: bool | None = None
     update_enabled: bool | None = None
     delay_update_for: int | None = None
+    healthcheck_timeout: int | None = None
     hooks: ContainerHooks | None = None
 
     @field_validator("delay_update_for")
@@ -130,6 +135,13 @@ class ContainerPatchRequestBody(BaseModel):
     def validate_delay_update_for(cls, value: int | None) -> int | None:
         if value is not None and value < 0:
             raise ValueError("delay_update_for must be a non-negative integer")
+        return value
+
+    @field_validator("healthcheck_timeout")
+    @classmethod
+    def validate_healthcheck_timeout(cls, value: int | None) -> int | None:
+        if value is not None and value < 0:
+            raise ValueError("healthcheck_timeout must be a non-negative integer")
         return value
 
 
