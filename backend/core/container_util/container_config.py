@@ -32,6 +32,7 @@ from .map_tmpfs_dict_to_list import map_tmpfs_dict_to_list
 from .map_ulimits_to_arg import map_ulimits_to_arg
 from .normalize_ns_mode import normalize_ns_mode
 from .normalize_path import normalize_path
+from .parse_extra_hosts import parse_extra_hosts
 
 
 def diff_container_config_with_image(
@@ -124,6 +125,7 @@ def get_container_config(
     config_dict = {
         "image": config.image,
         "name": container.name,
+        "add_hosts": parse_extra_hosts(host_config.extra_hosts),
         "blkio_weight": host_config.blkio_weight,
         "blkio_weight_device": host_config.blkio_weight_device,
         "command": command,

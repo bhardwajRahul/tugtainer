@@ -19,7 +19,7 @@ class CreateContainerRequestBodySchema(BaseModel):
 
     image: str
     command: list[str] | None = None
-    add_hosts: tuple[str, str] | None = None
+    add_hosts: list[tuple[str, str]] | None = None
     blkio_weight: int | None = None
     blkio_weight_device: list[str] | None = None
     cap_add: list[str] | None = None
@@ -112,7 +112,9 @@ class CreateContainerRequestBodySchema(BaseModel):
     user: str | None = None
     userns: str | None = None
     uts: str | None = None
-    volumes: list[tuple[ValidPath, ValidPath] | tuple[ValidPath, ValidPath, str]] | None = None
+    volumes: (
+        list[tuple[ValidPath, ValidPath] | tuple[ValidPath, ValidPath, str]] | None
+    ) = None
     volume_driver: str | None = None
     volumes_from: list[str] | None = None
     workdir: ValidPath | None = None

@@ -1,5 +1,5 @@
 import { expect, type APIRequestContext } from '@playwright/test';
-import type { AllHostsState, HostState, Job } from '../shared/types/jobs.types';
+import type { HostState, Job } from '../shared/types/jobs.types';
 
 export interface HostJobMatch {
   names?: string[];
@@ -33,16 +33,6 @@ function settledMatchingJob(
   return settled[settled.length - 1];
 }
 
-export async function getProgress<
-  T extends HostState | AllHostsState = HostState,
->(request: APIRequestContext, cacheId: string): Promise<T | null> {
-  const response = await request.get('/api/containers/progress', {
-    params: { cache_id: cacheId },
-  });
-  expect(response.ok()).toBeTruthy();
-  return (await response.json()) as T | null;
-}
-
 export async function getHostState(
   request: APIRequestContext,
   hostId: number,
@@ -50,28 +40,6 @@ export async function getHostState(
   const response = await request.get(`/api/containers/progress/${hostId}`);
   expect(response.ok()).toBeTruthy();
   return (await response.json()) as HostState | null;
-}
-
-export async function waitUntilSettled<
-  T extends HostState | AllHostsState = HostState,
->(request: APIRequestContext, cacheId: string): Promise<T> {
-  await expect
-    .poll(
-      async () => {
-        const state = await getProgress<T>(request, cacheId);
-        return state?.status ?? null;
-      },
-      {
-        timeout: 90_000,
-        intervals: [500, 1000, 2000],
-      },
-    )
-    .toMatch(/^(DONE|ERROR)$/);
-
-  const state = await getProgress<T>(request, cacheId);
-  expect(state, 'expected job state to exist').not.toBeNull();
-  expect(state!.status).toBe('DONE');
-  return state!;
 }
 
 export async function waitUntilHostSettled(

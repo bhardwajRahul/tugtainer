@@ -84,7 +84,13 @@ export const test = base.extend<{
         name: APP_NAME,
         Cmd: ['sleep', 'infinity'],
         Labels: { 'dev.quenary.tugtainer.test': TEST_LABEL },
-        HostConfig: { NetworkMode: PRIMARY_NET },
+        HostConfig: {
+          NetworkMode: PRIMARY_NET,
+          ExtraHosts: [
+            'host.docker.internal:host-gateway',
+            'test.local:127.0.0.1',
+          ],
+        },
       });
       await app.start();
       await connectContainerToNetwork(docker, EXTRA_NET, APP_NAME, {
