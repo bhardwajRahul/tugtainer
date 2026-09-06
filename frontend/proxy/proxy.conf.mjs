@@ -6,4 +6,12 @@ export default [
     logLevel: 'debug',
     changeOrigin: true,
   },
+  {
+    context: ['/ws'],
+    target: 'http://localhost:8000',
+    secure: false,
+    ws: true,
+    logLevel: 'debug',
+    changeOrigin: true,
+  },
 ];

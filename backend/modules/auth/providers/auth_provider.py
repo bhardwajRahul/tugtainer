@@ -43,7 +43,7 @@ class AuthProvider(ABC):
         pass
 
     @abstractmethod
-    async def is_authorized(self, request: Request) -> Literal[True]:
+    async def is_authorized(self, cookies: dict[str, str]) -> Literal[True]:
         """Whether user is authorized. Should raise 401 if not."""
         pass
 

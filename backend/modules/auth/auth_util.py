@@ -43,16 +43,12 @@ def auth_provider_by_name(
     return AUTH_PROVIDERS.get(provider)
 
 
-def active_auth_provider(
-    request: Request,
+def get_active_auth_provider_by_cookies(
+    cookies: dict[str, str],
 ) -> AuthProvider | None:
-    """
-    Returns active auth provider.
-    That is provider used for authentication, which name is stored in tokens.
-    """
     tokens = [
-        request.cookies.get("access_token"),
-        request.cookies.get("refresh_token"),
+        cookies.get("access_token"),
+        cookies.get("refresh_token"),
     ]
     data: TokenPayload | None = None
     for t in tokens:
@@ -64,18 +60,43 @@ def active_auth_provider(
     return auth_provider_by_name(provider)
 
 
-async def is_authorized(request: Request):
+def get_active_auth_provider_by_req(
+    request: Request,
+) -> AuthProvider | None:
     """
-    Dependency func that checks active auth provider auth state.
-    Returns True if auth disabled.
-    Returns True if there is active provider, and user is authorized.
-    Raises 401 if none is authorized.
+    Returns active auth provider.
+    That is provider used for authentication, which name is stored in tokens.
+    """
+    return get_active_auth_provider_by_cookies(request.cookies)
+
+
+async def is_authorized_cookies(cookies: dict[str, str]) -> bool:
+    """
+    Check if cookies are valid and authorized.
+
+    Returns True if auth is disabled.
+    Returns True if authorized.
+
+    Raises 401 if no provider in tokens or unauthorized.
     Raises 403 if active provider (in token) is disabled.
     """
     if Config.DISABLE_AUTH:
         return True
-    provider = active_auth_provider(request)
+    provider = get_active_auth_provider_by_cookies(cookies)
     if not provider:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Unauthorized")
     await provider.raise_of_disabled()
-    return await provider.is_authorized(request)
+    return await provider.is_authorized(cookies)
+
+
+async def is_authorized_req(request: Request) -> bool:
+    """
+    Check if request has valid and authorized cookies.
+
+    Returns True if auth is disabled.
+    Returns True if authorized.
+
+    Raises 401 if no provider in tokens or unauthorized.
+    Raises 403 if active provider (in token) is disabled.
+    """
+    return await is_authorized_cookies(request.cookies)

@@ -66,9 +66,7 @@ AUTH:
 ACTIONS:
   RESULT: 결과
   PROGRESS: 진행
-  IN_PROGRESS: 진행 중
-  QUEUED: 대기 중
-  COMPLETED: 완료됨
+
   ALL_CONTAINERS: 모든 컨테이너
   CHECK_ALL: 전체 확인
   UPDATE_ALL: 전체 업데이트

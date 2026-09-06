@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from aiohttp.client_exceptions import ClientError
 from fastapi import FastAPI, HTTPException, Request, status
+from fastapi.middleware.cors import CORSMiddleware
 
 from backend.config import Config
 from backend.core.agent_client import (
@@ -11,6 +12,7 @@ from backend.core.agent_client import (
 )
 from backend.core.cron_manager import schedule_jobs_on_init
 from backend.core.jobs.jobs_log import install_job_log_handler
+from backend.core.socket_manager import socket_manager
 from backend.exception import TugAgentClientError
 from backend.modules.auth.auth_router import (
     auth_router as auth_router,
@@ -70,6 +72,17 @@ app.include_router(public_router)
 app.include_router(settings_router)
 app.include_router(images_router)
 app.include_router(hosts_router)
+
+if Config.ALLOW_ORIGINS:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=Config.ALLOW_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+socket_manager.init_socket(app)
 
 
 @app.exception_handler(ClientError)

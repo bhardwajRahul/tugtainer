@@ -24,6 +24,7 @@ class Config:
     PASSWORD_FILE: ClassVar[str]
     HTTPS: ClassVar[bool]
     DOMAIN: ClassVar[str | None]
+    ALLOW_ORIGINS: ClassVar[list[str]]
     ENABLE_PUBLIC_API: ClassVar[bool]
     ALLOW_HOOKS: ClassVar[bool]
     GH_TOKEN: ClassVar[str]
@@ -51,6 +52,31 @@ class Config:
         if not cls._loaded:
             load_dotenv()
             apply_file_env()
+
+            def _parse_list(value: str) -> list[str]:
+                return [item.strip() for item in value.split(",") if item.strip()]
+
+            def _parse_set(value: str) -> set[str]:
+                return set(_parse_list(value))
+
+            def _parse_env_list(name: str) -> list[str]:
+                return _parse_list(os.getenv(name, ""))
+
+            def _parse_env_set(name: str) -> set[str]:
+                return _parse_set(os.getenv(name, ""))
+
+            def _parse_networks(name: str) -> set[IPv4Network | IPv6Network]:
+                networks = _parse_env_set(name)
+                res: set[IPv4Network | IPv6Network] = set()
+                for net in networks:
+                    try:
+                        res.add(ip_network(net))
+                    except Exception:
+                        logging.warning(
+                            f"{net} is not a valid IP network. Check the {name} environment variable."
+                        )
+                return res
+
             cls.HOSTNAME = os.getenv("HOSTNAME", "")
             cls.LOG_LEVEL = (os.getenv("LOG_LEVEL") or "info").upper()
             cls.DISABLE_AUTH = os.getenv("DISABLE_AUTH", "false").lower() == "true"
@@ -73,6 +99,9 @@ class Config:
             cls.PASSWORD_FILE = os.getenv("PASSWORD_FILE") or "/tugtainer/password_hash"
             cls.HTTPS = os.getenv("HTTPS", "false").lower() == "true"
             cls.DOMAIN = os.getenv("DOMAIN") or None
+
+            cls.ALLOW_ORIGINS = _parse_env_list("ALLOW_ORIGINS")
+
             cls.ENABLE_PUBLIC_API = (
                 os.getenv("ENABLE_PUBLIC_API", "false").lower() == "true"
             )
@@ -88,28 +117,10 @@ class Config:
             cls.OIDC_REDIRECT_URI = os.getenv("OIDC_REDIRECT_URI", "")
             cls.OIDC_SCOPES = os.getenv("OIDC_SCOPES", "openid profile email")
 
-            def _parse_set(value: str) -> set[str]:
-                return {item.strip() for item in value.split(",") if item.strip()}
-
-            def _parse_env_set(name: str) -> set[str]:
-                return _parse_set(os.getenv(name, ""))
-
             cls.OIDC_ALLOWED_EMAILS = {
                 email.casefold() for email in _parse_env_set("OIDC_ALLOWED_EMAILS")
             }
             cls.OIDC_ALLOWED_SUBJECTS = _parse_env_set("OIDC_ALLOWED_SUBJECTS")
-
-            def _parse_networks(name: str) -> set[IPv4Network | IPv6Network]:
-                networks = _parse_env_set(name)
-                res: set[IPv4Network | IPv6Network] = set()
-                for net in networks:
-                    try:
-                        res.add(ip_network(net))
-                    except Exception:
-                        logging.warning(
-                            f"{net} is not a valid IP network. Check the {name} environment variable."
-                        )
-                return res
 
             cls.NOTIFICATION_ALLOW_SCHEMES = _parse_env_set(
                 "NOTIFICATION_ALLOW_SCHEMES"

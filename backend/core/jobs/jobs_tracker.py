@@ -1,4 +1,5 @@
-from typing import cast
+import asyncio
+from typing import Final, cast
 
 from backend.core.jobs.jobs_cache import JobStateCache
 from backend.core.jobs.jobs_results import ContainerJobResult
@@ -9,6 +10,7 @@ from backend.core.jobs.jobs_schemas import (
     JobKind,
 )
 from backend.core.jobs.jobs_util import get_host_cache_key
+from backend.core.socket_manager import socket_manager
 from backend.enums.job_status_enum import EJobStatus
 from backend.modules.hosts.hosts_model import HostsModel
 
@@ -19,8 +21,34 @@ class HostJobTracker:
     """Read/write helper for the unified per-host job state cache."""
 
     def __init__(self, host: HostsModel) -> None:
-        self._host = host
-        self._cache = JobStateCache[HostState](get_host_cache_key(host))
+        self._host: Final[HostsModel] = host
+        self._cache: Final[JobStateCache[HostState]] = JobStateCache[HostState](
+            get_host_cache_key(host)
+        )
+        self._broadcast_task: asyncio.Task[None] | None = None
+        self._pending_broadcast: bool = False
+
+    async def _broadcast_loop(self) -> None:
+        while self._pending_broadcast:
+            self._pending_broadcast = False
+            state = self._cache.get()
+            if state:
+                await socket_manager.emit(
+                    "job_progress", {"host_id": self._host.id, "state": state}
+                )
+            await asyncio.sleep(0.34)
+
+    def _broadcast(self) -> None:
+        self._pending_broadcast = True
+
+        if self._broadcast_task and not self._broadcast_task.done():
+            return
+
+        try:
+            loop = asyncio.get_running_loop()
+            self._broadcast_task = loop.create_task(self._broadcast_loop())
+        except RuntimeError:
+            pass
 
     def get(self) -> HostState | None:
         return self._cache.get()
@@ -53,6 +81,7 @@ class HostJobTracker:
                 "completed": list(existing.get("completed") or []),
             }
         )
+        self._broadcast()
 
     def set_status(self, status: EJobStatus) -> None:
         state = self._cache.get() or {}
@@ -62,9 +91,11 @@ class HostJobTracker:
             self._cache.update({"status": status, "current": cast(Job, current)})
         else:
             self._cache.update({"status": status})
+        self._broadcast()
 
     def set_queued(self, queued: list[Job]) -> None:
         self._cache.update({"queued": queued})
+        self._broadcast()
 
     def set_container(
         self,
@@ -82,6 +113,7 @@ class HostJobTracker:
         containers[name] = slot
         current["containers"] = containers
         self._cache.update({"current": cast(Job, current)})
+        self._broadcast()
 
     def append_log(self, line: str) -> None:
         state = self._cache.get() or {}
@@ -94,12 +126,14 @@ class HostJobTracker:
             log = log[-JOB_LOG_MAX_LINES:]
         current["log"] = log
         self._cache.update({"current": cast(Job, current)})
+        self._broadcast()
 
     def set_prune_result(self, prune_result: str | None) -> None:
         state = self._cache.get() or {}
         current = dict(state.get("current") or {})
         current["prune_result"] = prune_result
         self._cache.update({"current": cast(Job, current)})
+        self._broadcast()
 
     def complete_current(self, status: EJobStatus) -> Job:
         """Append the current job to completed without marking the host idle."""
@@ -122,4 +156,5 @@ class HostJobTracker:
         else:
             data["current"] = current
         self._cache.update(data)
+        self._broadcast()
         return current

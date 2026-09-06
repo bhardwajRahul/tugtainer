@@ -30,6 +30,14 @@ export interface IJob extends IJobBase {
   log?: string[];
 }
 
+/**
+ * Job progress socket event
+ */
+export interface IJobProgressEvent {
+  host_id: number;
+  state: IHostState;
+}
+
 export interface IHostState {
   status: EJobStatus;
   current?: IJob | null;
@@ -37,14 +45,7 @@ export interface IHostState {
   completed?: IJob[];
 }
 
-export interface IAllHostsState {
-  status: EJobStatus;
-  hosts?: Record<string, IJob>;
-}
-
-export function isHostBusy(
-  state: IHostState | IAllHostsState | null | undefined,
-): boolean {
+export function isHostBusy(state: IHostState | null | undefined): boolean {
   return Boolean(
     state?.status &&
     ![EJobStatus.DONE, EJobStatus.ERROR].includes(state.status),
@@ -89,7 +90,7 @@ export function containerJobSlot(
   return undefined;
 }
 
-export function hasHostJobsDialog(
+export function shouldIncludeHostToJobsDialog(
   state: IHostState | null | undefined,
   pruneResult?: string | null,
 ): boolean {

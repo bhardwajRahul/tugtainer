@@ -15,11 +15,11 @@ from backend.core.container_util.is_protected_container import is_protected_cont
 from backend.core.jobs.check.check_all import check_all_hosts
 from backend.core.jobs.jobs_cache import JobStateCache
 from backend.core.jobs.jobs_coordinator import host_job_coordinator
-from backend.core.jobs.jobs_schemas import AllHostsState, HostState, JobKind
-from backend.core.jobs.jobs_util import ALL_HOSTS_CACHE_KEY, get_host_cache_key
+from backend.core.jobs.jobs_schemas import HostState, JobKind
+from backend.core.jobs.jobs_util import get_host_cache_key
 from backend.core.jobs.update.update_all import update_all_hosts
 from backend.db.session import get_async_session
-from backend.modules.auth.auth_util import is_authorized
+from backend.modules.auth.auth_util import is_authorized_req
 from backend.modules.hosts.hosts_model import HostsModel
 from backend.modules.hosts.hosts_util import get_host
 from shared.schemas.container_schemas import (
@@ -42,7 +42,7 @@ from .containers_util import (
 containers_router = APIRouter(
     prefix="/containers",
     tags=["containers"],
-    dependencies=[Depends(is_authorized)],
+    dependencies=[Depends(is_authorized_req)],
 )
 
 
@@ -203,11 +203,10 @@ async def _enqueue_host_job(
 
 @containers_router.post(
     path="/check",
-    description="Run general check process. Returns ID of the task that can be used for monitoring.",
+    description="Run general check process.",
 )
 async def check_all():
     asyncio.create_task(check_all_hosts(True))
-    return ALL_HOSTS_CACHE_KEY
 
 
 @containers_router.post(
@@ -239,11 +238,10 @@ async def check_container(
 
 @containers_router.post(
     path="/update",
-    description="Run general update process. Returns ID of the task that can be used for monitoring.",
+    description="Run general update process.",
 )
 async def update_all():
     asyncio.create_task(update_all_hosts())
-    return ALL_HOSTS_CACHE_KEY
 
 
 @containers_router.post(
@@ -275,12 +273,12 @@ async def update_container(
 
 @containers_router.get(
     path="/progress",
-    description="Get progress by cache id (host key or global 'all')",
-    response_model=AllHostsState | HostState | None,
+    description="Get progress by cache id (host key)",
+    response_model=HostState | None,
 )
 def progress(
     cache_id: str,
-) -> AllHostsState | HostState | None:
+) -> HostState | None:
     CACHE = JobStateCache[Any](cache_id)
     return CACHE.get()
 

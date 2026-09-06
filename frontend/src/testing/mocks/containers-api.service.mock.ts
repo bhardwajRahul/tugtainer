@@ -8,7 +8,6 @@ export const getContainersApiServiceMock = (): Mocked<ContainersApiService> => {
     checkContainer: vi.fn(),
     updateContainer: vi.fn(),
     hostState: vi.fn(),
-    watchJobState: vi.fn() as Mocked<ContainersApiService>['watchJobState'],
     patch: vi.fn(),
     controlContainer: vi.fn(),
     checkAll: vi.fn(),

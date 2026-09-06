@@ -14,7 +14,7 @@ from backend.core.agent_client import AgentClientManager
 from backend.core.cron_manager import CronManager
 from backend.db.session import get_async_session
 from backend.enums.cron_jobs_enum import ECronJob
-from backend.modules.auth.auth_util import is_authorized
+from backend.modules.auth.auth_util import is_authorized_req
 from backend.modules.containers.containers_model import (
     ContainersModel,
 )
@@ -65,7 +65,7 @@ async def get_summary(
     session: AsyncSession = Depends(get_async_session),
 ) -> list[HostSummary]:
     try:
-        await is_authorized(request)
+        await is_authorized_req(request)
     except Exception:
         if not Config.ENABLE_PUBLIC_API:
             raise HTTPException(403, "Public api disabled") from None
@@ -85,7 +85,7 @@ async def get_update_count(
     session: AsyncSession = Depends(get_async_session),
 ) -> TotalUpdateCountResponseBodySchema:
     try:
-        await is_authorized(request)
+        await is_authorized_req(request)
     except Exception:
         if not Config.ENABLE_PUBLIC_API:
             raise HTTPException(403, "Public api disabled") from None

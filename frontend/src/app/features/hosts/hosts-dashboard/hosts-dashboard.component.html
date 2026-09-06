@@ -38,9 +38,7 @@
     </p-button>
 
     <section class="header-actions">
-      @let jobState = h.jobState;
-      @let pruneRes = h.pruneResult;
-      @if (hasHostJobsDialog(jobState, pruneRes)) {
+      @if (hasHostJobsDialog()) {
         <p-button
           severity="success"
           text

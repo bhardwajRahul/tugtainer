@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.agent_client import AgentClientManager
 from backend.db.session import get_async_session
 from backend.exception import TugAgentClientError
-from backend.modules.auth.auth_util import is_authorized
+from backend.modules.auth.auth_util import is_authorized_req
 from backend.modules.hosts.hosts_util import (
     annotate_available_updates_count,
     get_host,
@@ -23,7 +23,7 @@ from .hosts_schemas import (
 hosts_router = APIRouter(
     prefix="/hosts",
     tags=["hosts"],
-    dependencies=[Depends(is_authorized)],
+    dependencies=[Depends(is_authorized_req)],
 )
 
 

@@ -1,112 +1,137 @@
 @let view = data();
 
-@if (view.current; as current) {
-  <section class="progress-section">
-    <h3>{{ 'ACTIONS.IN_PROGRESS' | translate }}</h3>
-    <p-accordion
-      [multiple]="true"
-      [value]="accordionValue()"
-      (valueChange)="accordionValue.set($event)">
-      <p-accordion-panel value="current">
-        <p-accordion-header>
-          <div class="job-header">
-            @if (current.kind; as kind) {
-              <p-tag [severity]="kindSeverity[kind]">{{
-                kindKey[kind] | translate
-              }}</p-tag>
-            }
-            <span>
-              @if (current.names; as names) {
-                {{ names.join(', ') }}
-              } @else {
-                {{ 'ACTIONS.ALL_CONTAINERS' | translate }}
-              }
-            </span>
-            @if (current.status; as status) {
-              <p-tag [severity]="statusSeverity[status]">{{ status }}</p-tag>
-            }
-          </div>
-        </p-accordion-header>
-        <p-accordion-content>
-          @if (current.containers || current.prune_result) {
-            <app-host-jobs-result [job]="current"></app-host-jobs-result>
-          }
-          <ng-container
-            [ngTemplateOutlet]="jobLog"
-            [ngTemplateOutletContext]="{ $implicit: current }" />
-        </p-accordion-content>
-      </p-accordion-panel>
-    </p-accordion>
-  </section>
-}
-
-@if (view.queued.length) {
-  <section class="progress-section">
-    <h3>{{ 'ACTIONS.QUEUED' | translate }}</h3>
-    <p-accordion [multiple]="true">
-      @for (q of view.queued; track $index) {
-        <p-accordion-panel [value]="'queued-' + $index">
-          <p-accordion-header>
-            <div class="job-header">
-              @if (q.kind; as kind) {
-                <p-tag [severity]="kindSeverity[kind]">{{
-                  kindKey[kind] | translate
-                }}</p-tag>
-              }
-              <span>
-                @if (q.names; as names) {
-                  {{ names.join(', ') }}
-                } @else {
-                  {{ 'ACTIONS.ALL_CONTAINERS' | translate }}
-                }
-              </span>
-            </div>
-          </p-accordion-header>
-          <p-accordion-content></p-accordion-content>
-        </p-accordion-panel>
+<div class="hosts-container">
+  @for (host of view.hosts; track host.hostId) {
+    <div class="host-section">
+      @if (view.hosts.length > 1) {
+        <h2 class="host-title">{{ host.hostName }}</h2>
       }
-    </p-accordion>
-  </section>
-}
 
-@if (view.completed.length) {
-  <section class="progress-section">
-    <h3>{{ 'ACTIONS.COMPLETED' | translate }}</h3>
-    <p-accordion [multiple]="true">
-      @for (c of view.completed; track $index) {
-        <p-accordion-panel [value]="'completed-' + $index">
-          <p-accordion-header>
-            <div class="job-header">
-              @if (c.kind; as kind) {
-                <p-tag [severity]="kindSeverity[kind]">{{
-                  kindKey[kind] | translate
-                }}</p-tag>
-              }
-              <span>
-                @if (c.names; as names) {
-                  {{ names.join(', ') }}
-                } @else if (c.kind) {
-                  {{ 'ACTIONS.ALL_CONTAINERS' | translate }}
+      @if (host.current; as current) {
+        <section class="progress-section">
+          <p-accordion
+            [multiple]="true"
+            [value]="getAccordionValue(host.hostId)"
+            (valueChange)="setAccordionValue(host.hostId, $event)">
+            <p-accordion-panel value="current">
+              <p-accordion-header>
+                <div class="job-header">
+                  @if (current.kind; as kind) {
+                    <p-tag [severity]="kindSeverity[kind]">{{
+                      kindKey[kind] | translate
+                    }}</p-tag>
+                  }
+                  <span>
+                    @if (current.names; as names) {
+                      {{ names.join(', ') }}
+                    } @else {
+                      {{ 'ACTIONS.ALL_CONTAINERS' | translate }}
+                    }
+                  </span>
+                  @if (current.status; as status) {
+                    <p-tag
+                      [severity]="statusSeverity[status]"
+                      >{{ status }}</p-tag
+                    >
+                  }
+                  <p-progress-spinner
+                    strokeWidth="4"
+                    animationDuration=".5s"
+                    [style]="{ width: '20px', height: '20px', margin: '0' }">
+                  </p-progress-spinner>
+                </div>
+              </p-accordion-header>
+              <p-accordion-content>
+                @if (current.containers || current.prune_result) {
+                  <app-host-jobs-result [job]="current"></app-host-jobs-result>
                 }
-              </span>
-              @if (c.status; as status) {
-                <p-tag [severity]="statusSeverity[status]">{{ status }}</p-tag>
-              }
-            </div>
-          </p-accordion-header>
-          <p-accordion-content>
-            @if (c.containers || c.prune_result) {
-              <app-host-jobs-result [job]="c"></app-host-jobs-result>
-            }
-            <ng-container
-              [ngTemplateOutlet]="jobLog"
-              [ngTemplateOutletContext]="{ $implicit: c }" />
-          </p-accordion-content>
-        </p-accordion-panel>
+                <ng-container
+                  [ngTemplateOutlet]="jobLog"
+                  [ngTemplateOutletContext]="{ $implicit: current }" />
+              </p-accordion-content>
+            </p-accordion-panel>
+          </p-accordion>
+        </section>
       }
-    </p-accordion>
-  </section>
-}
+
+      @if (host.queued.length) {
+        <section class="progress-section">
+          <p-accordion [multiple]="true">
+            @for (q of host.queued; track $index) {
+              <p-accordion-panel [value]="'queued-' + $index">
+                <p-accordion-header>
+                  <div class="job-header">
+                    @if (q.kind; as kind) {
+                      <p-tag [severity]="kindSeverity[kind]">{{
+                        kindKey[kind] | translate
+                      }}</p-tag>
+                    }
+                    <span>
+                      @if (q.names; as names) {
+                        {{ names.join(', ') }}
+                      } @else {
+                        {{ 'ACTIONS.ALL_CONTAINERS' | translate }}
+                      }
+                    </span>
+                  </div>
+                </p-accordion-header>
+                <p-accordion-content></p-accordion-content>
+              </p-accordion-panel>
+            }
+          </p-accordion>
+        </section>
+      }
+
+      @if (host.completed.length) {
+        <section class="progress-section">
+          <p-accordion [multiple]="true">
+            @for (c of host.completed; track $index) {
+              <p-accordion-panel [value]="'completed-' + $index">
+                <p-accordion-header>
+                  <div class="job-header">
+                    @if (c.kind; as kind) {
+                      <p-tag [severity]="kindSeverity[kind]">{{
+                        kindKey[kind] | translate
+                      }}</p-tag>
+                    }
+                    <span>
+                      @if (c.names; as names) {
+                        {{ names.join(', ') }}
+                      } @else if (c.kind) {
+                        {{ 'ACTIONS.ALL_CONTAINERS' | translate }}
+                      }
+                    </span>
+                    @if (c.status; as status) {
+                      <p-tag
+                        [severity]="statusSeverity[status]"
+                        >{{ status }}</p-tag
+                      >
+                    }
+                  </div>
+                </p-accordion-header>
+                <p-accordion-content>
+                  @if (c.containers || c.prune_result) {
+                    <app-host-jobs-result [job]="c"></app-host-jobs-result>
+                  }
+                  <ng-container
+                    [ngTemplateOutlet]="jobLog"
+                    [ngTemplateOutletContext]="{ $implicit: c }" />
+                </p-accordion-content>
+              </p-accordion-panel>
+            }
+          </p-accordion>
+        </section>
+      }
+
+      @if (host.pruneResult; as r) {
+        <section class="progress-section">
+          <h3>{{ 'ACTIONS.PRUNE_RESULT' | translate }}</h3>
+          <pre>{{ r }}</pre>
+        </section>
+      }
+    </div>
+  }
+</div>
 
 <ng-template
   #jobLog
@@ -126,10 +151,3 @@
     </p-accordion>
   }
 </ng-template>
-
-@if (view.pruneResult; as r) {
-  <section class="progress-section">
-    <h3>{{ 'ACTIONS.PRUNE_RESULT' | translate }}</h3>
-    <pre>{{ r }}</pre>
-  </section>
-}

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BaseApiService } from '../../shared/types/base-api.service';
-import { Observable, repeat, takeWhile } from 'rxjs';
+import { Observable } from 'rxjs';
 import {
   IContainerListItem,
   IContainerPatchBody,
@@ -8,11 +8,7 @@ import {
   TControlContainerCommand,
   IGetContainerLogsRequestBody,
 } from './containers.interface';
-import {
-  EJobStatus,
-  IAllHostsState,
-  IHostState,
-} from '../../shared/interfaces/jobs.interface';
+import { IHostState } from '../../shared/interfaces/jobs.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -47,8 +43,8 @@ export class ContainersApiService extends BaseApiService<'/containers'> {
     return this.httpClient.get<boolean>(`${this.basePath}/hooks_enabled`);
   }
 
-  checkAll(): Observable<string> {
-    return this.httpClient.post<string>(`${this.basePath}/check`, {});
+  checkAll(): Observable<void> {
+    return this.httpClient.post<void>(`${this.basePath}/check`, {});
   }
 
   checkHost(host_id: number, names?: string[]): Observable<string> {
@@ -62,8 +58,8 @@ export class ContainersApiService extends BaseApiService<'/containers'> {
     return this.checkHost(host_id, [name]);
   }
 
-  updateAll(): Observable<string> {
-    return this.httpClient.post<string>(`${this.basePath}/update`, {});
+  updateAll(): Observable<void> {
+    return this.httpClient.post<void>(`${this.basePath}/update`, {});
   }
 
   updateHost(host_id: number, names?: string[]): Observable<string> {
@@ -89,28 +85,10 @@ export class ContainersApiService extends BaseApiService<'/containers'> {
   /**
    * Get job state by cache id
    */
-  jobState<T extends IHostState | IAllHostsState>(
-    cache_id: string,
-  ): Observable<T> {
+  jobState<T extends IHostState>(cache_id: string): Observable<T> {
     return this.httpClient.get<T>(`${this.basePath}/progress`, {
       params: { cache_id },
     });
-  }
-
-  /**
-   * Watch job state until DONE or ERROR
-   */
-  watchJobState<T extends IHostState | IAllHostsState>(
-    cache_id: string,
-  ): Observable<T> {
-    return this.jobState<T>(cache_id).pipe(
-      repeat({ delay: 500 }),
-      takeWhile(
-        (res) =>
-          res && ![EJobStatus.DONE, EJobStatus.ERROR].includes(res.status),
-        true,
-      ),
-    );
   }
 
   /**

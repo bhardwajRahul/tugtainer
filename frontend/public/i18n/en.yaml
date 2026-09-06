@@ -66,9 +66,7 @@ AUTH:
 ACTIONS:
   RESULT: Result
   PROGRESS: Progress
-  IN_PROGRESS: In progress
-  QUEUED: Queued
-  COMPLETED: Completed
+
   ALL_CONTAINERS: All containers
   CHECK_ALL: Check all
   UPDATE_ALL: Update all

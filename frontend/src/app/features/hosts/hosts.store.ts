@@ -22,24 +22,15 @@ import {
 import { computed, effect, inject } from '@angular/core';
 import { HostsApiService } from './hosts-api.service';
 import { ToastService } from 'src/app/core/services/toast.service';
-import {
-  EMPTY,
-  interval,
-  mergeMap,
-  Observable,
-  pipe,
-  startWith,
-  switchMap,
-  tap,
-} from 'rxjs';
+import { EMPTY, mergeMap, Observable, pipe, switchMap, tap } from 'rxjs';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { tapResponse } from '@ngrx/operators';
 import {
-  IAllHostsState,
   IHostState,
   isHostBusy,
+  shouldIncludeHostToJobsDialog,
 } from '@shared/interfaces/jobs.interface';
 import { ContainersApiService } from '../containers/containers-api.service';
 import { IHostSummary } from '../public/public-interface';
@@ -52,11 +43,11 @@ import {
   IJobsProgressDialogSource,
   JobsProgressDialogComponent,
 } from '@shared/components/jobs-progress-dialog/jobs-progress-dialog.component';
+import { SocketService } from '../../core/services/socket.service';
 
 interface IHostsStore {
-  loading: THostsLoading;
+  loading: boolean;
   selectedId: number | null;
-  globalJobState: IAllHostsState | null;
   /**
    * Update containers list signal
    */
@@ -83,33 +74,58 @@ export const HostsStore = signalStore(
   withState<IHostsStore>(() => ({
     loading: null,
     selectedId: null,
-    globalJobState: null,
     updateContainersList: null,
     updateImagesList: null,
   })),
-  withComputed((store) => ({
-    /**
-     * Selected host entity
-     */
-    selected: computed<IHostEntity | null>(() => {
-      const id = store.selectedId();
-      const hosts = store.entityMap();
-      return hosts[id] ?? null;
-    }),
-    /**
-     * If any host has containers with available updates
-     */
-    anyForUpdate: computed(() => {
+  withComputed((store) => {
+    const globalCheckActive = computed<boolean>(() => {
       const hosts = store.entities();
-      return hosts.some((h) => h.available_updates_count ?? 0 > 0);
-    }),
-    /**
-     * If global action (check/update) is active
-     */
-    globalActionActive: computed<boolean>(() => {
-      return isHostBusy(store.globalJobState());
-    }),
-  })),
+      return hosts.some(
+        (h) => h.loading === 'check' || h.jobState?.current?.kind === 'check',
+      );
+    });
+
+    const globalUpdateActive = computed<boolean>(() => {
+      const hosts = store.entities();
+      return hosts.some(
+        (h) => h.loading === 'update' || h.jobState?.current?.kind === 'update',
+      );
+    });
+
+    const globalActionActive = computed<boolean>(() => {
+      return globalCheckActive() || globalUpdateActive();
+    });
+
+    return {
+      /**
+       * Selected host entity
+       */
+      selected: computed<IHostEntity | null>(() => {
+        const id = store.selectedId();
+        const hosts = store.entityMap();
+        return hosts[id] ?? null;
+      }),
+      /**
+       * If any host has containers with available updates
+       */
+      anyForUpdate: computed(() => {
+        const hosts = store.entities();
+        return hosts.some((h) => h.available_updates_count ?? 0 > 0);
+      }),
+      /**
+       * If global action (check) is active
+       */
+      globalCheckActive,
+      /**
+       * If global action (update) is active
+       */
+      globalUpdateActive,
+      /**
+       * If global action (check/update) is active
+       */
+      globalActionActive,
+    };
+  }),
   withMethods((store) => {
     const hostsApiService = inject(HostsApiService);
     const toastService = inject(ToastService);
@@ -127,7 +143,7 @@ export const HostsStore = signalStore(
 
     const loadList = rxMethod<void>(
       pipe(
-        tap(() => patchState(store, { loading: 'loading' })),
+        tap(() => patchState(store, { loading: true })),
         switchMap(() =>
           hostsApiService.list().pipe(
             tapResponse({
@@ -153,7 +169,7 @@ export const HostsStore = signalStore(
                   });
               },
               error: (error) => toastService.error(error),
-              finalize: () => patchState(store, { loading: null }),
+              finalize: () => patchState(store, { loading: false }),
             }),
           ),
         ),
@@ -162,7 +178,7 @@ export const HostsStore = signalStore(
 
     const loadSummary = rxMethod<void>(
       pipe(
-        tap(() => patchState(store, { loading: 'loading' })),
+        tap(() => patchState(store, { loading: true })),
         switchMap(() =>
           publicApiService.getSummary().pipe(
             tapResponse({
@@ -182,7 +198,7 @@ export const HostsStore = signalStore(
               error: (error) => {
                 toastService.error(error);
               },
-              finalize: () => patchState(store, { loading: null }),
+              finalize: () => patchState(store, { loading: false }),
             }),
           ),
         ),
@@ -194,7 +210,7 @@ export const HostsStore = signalStore(
         tap(({ hostId }) =>
           patchState(
             store,
-            { loading: 'loading' },
+            { loading: true },
             updateEntity({
               id: hostId,
               changes: { status: null },
@@ -227,7 +243,7 @@ export const HostsStore = signalStore(
                       },
                     },
                   }),
-                  { loading: null },
+                  { loading: false },
                 );
               },
             }),
@@ -236,36 +252,24 @@ export const HostsStore = signalStore(
       ),
     );
 
-    function createActionMethod(
-      apiCall: () => Observable<string>,
-      loading: Extract<THostsLoading, 'check' | 'update'>,
-    ) {
+    function createActionMethod(apiCall: () => Observable<void>) {
       return rxMethod<void>(
         pipe(
-          tap(() => patchState(store, { globalJobState: null, loading })),
+          tap(() => patchState(store, { loading: true })),
           switchMap(() =>
             apiCall().pipe(
-              tap(() =>
-                toastService.success(
-                  translateService.instant('GENERAL.IN_PROGRESS'),
-                ),
-              ),
-              switchMap((cacheId) =>
-                containersApiService.watchJobState<IAllHostsState>(cacheId),
-              ),
               tapResponse({
-                next: (globalJobState) => {
-                  patchState(store, { globalJobState });
+                next: () => {
+                  toastService.success(
+                    translateService.instant('GENERAL.IN_PROGRESS'),
+                  );
                   openJobProgressDialog({ global: true });
                 },
                 error: (error) => {
                   toastService.error(error);
                 },
                 finalize: () => {
-                  patchState(store, { loading: null });
-                  loadList();
-                  _updateContainersList();
-                  _updateImagesList();
+                  patchState(store, { loading: false });
                 },
               }),
             ),
@@ -347,24 +351,32 @@ export const HostsStore = signalStore(
       }
     };
 
-    const pollHostState = rxMethod<number | null>(
+    const loadHostState = rxMethod<number | null>(
       pipe(
         switchMap((hostId) => {
           if (!hostId) {
             return EMPTY;
           }
-          return interval(1000).pipe(
-            startWith(0),
-            switchMap(() =>
-              containersApiService.hostState(hostId).pipe(
-                tapResponse({
-                  next: (jobState) => applyHostState(hostId, jobState),
-                  error: () => undefined,
-                }),
-              ),
-            ),
+          return containersApiService.hostState(hostId).pipe(
+            tapResponse({
+              next: (jobState) => applyHostState(hostId, jobState),
+              error: () => undefined,
+            }),
           );
         }),
+      ),
+    );
+
+    const socketService = inject(SocketService);
+    const watchSocketProgress = rxMethod<void>(
+      pipe(
+        switchMap(() =>
+          socketService.jobProgress$.pipe(
+            tap((event) => {
+              applyHostState(event.host_id, event.state);
+            }),
+          ),
+        ),
       ),
     );
 
@@ -387,18 +399,35 @@ export const HostsStore = signalStore(
         data: {
           read: () => {
             if (source.global) {
-              const hosts = store.globalJobState()?.hosts ?? {};
-              return {
-                jobState: null,
-                pruneResult: null,
-                extraJobs: Object.values(hosts),
-              };
+              const entities = store.entities();
+              const hosts = [];
+              for (const host of entities) {
+                if (
+                  shouldIncludeHostToJobsDialog(host.jobState, host.pruneResult)
+                ) {
+                  hosts.push({
+                    hostId: host.id,
+                    hostName: host.name,
+                    jobState: host.jobState ?? null,
+                    pruneResult: host.pruneResult ?? null,
+                  });
+                }
+              }
+              return { hosts };
             }
             const entity =
               source.hostId != null ? store.entityMap()[source.hostId] : null;
             return {
-              jobState: entity?.jobState ?? null,
-              pruneResult: entity?.pruneResult ?? null,
+              hosts: entity
+                ? [
+                    {
+                      hostId: entity.id,
+                      hostName: entity.name,
+                      jobState: entity.jobState ?? null,
+                      pruneResult: entity.pruneResult ?? null,
+                    },
+                  ]
+                : [],
             };
           },
         },
@@ -419,7 +448,7 @@ export const HostsStore = signalStore(
       loadStatusOf,
       create: rxMethod<{ body: IHostCreate }>(
         pipe(
-          tap(() => patchState(store, { loading: 'loading' })),
+          tap(() => patchState(store, { loading: true })),
           switchMap(({ body }) =>
             hostsApiService.create(body).pipe(
               tapResponse({
@@ -443,7 +472,7 @@ export const HostsStore = signalStore(
                   }
                 },
                 error: (error) => toastService.error(error),
-                finalize: () => patchState(store, { loading: null }),
+                finalize: () => patchState(store, { loading: false }),
               }),
             ),
           ),
@@ -451,7 +480,7 @@ export const HostsStore = signalStore(
       ),
       update: rxMethod<{ id: number; body: IHostUpdate }>(
         pipe(
-          tap(() => patchState(store, { loading: 'loading' })),
+          tap(() => patchState(store, { loading: true })),
           switchMap(({ id, body }) =>
             hostsApiService.update(id, body).pipe(
               tapResponse({
@@ -469,7 +498,7 @@ export const HostsStore = signalStore(
                   }
                 },
                 error: (error) => toastService.error(error),
-                finalize: () => patchState(store, { loading: null }),
+                finalize: () => patchState(store, { loading: false }),
               }),
             ),
           ),
@@ -477,7 +506,7 @@ export const HostsStore = signalStore(
       ),
       delete: rxMethod<{ id: number }>(
         pipe(
-          tap(() => patchState(store, { loading: 'loading' })),
+          tap(() => patchState(store, { loading: true })),
           switchMap(({ id }) =>
             hostsApiService.delete(id).pipe(
               tapResponse({
@@ -487,7 +516,7 @@ export const HostsStore = signalStore(
                   patchState(store, removeEntity(id));
                 },
                 error: (error) => toastService.error(error),
-                finalize: () => patchState(store, { loading: null }),
+                finalize: () => patchState(store, { loading: false }),
               }),
             ),
           ),
@@ -496,17 +525,11 @@ export const HostsStore = signalStore(
       /**
        * Check all containers of all hosts
        */
-      checkAll: createActionMethod(
-        () => containersApiService.checkAll(),
-        'check',
-      ),
+      checkAll: createActionMethod(() => containersApiService.checkAll()),
       /**
        * Update all containers of all hosts
        */
-      updateAll: createActionMethod(
-        () => containersApiService.updateAll(),
-        'update',
-      ),
+      updateAll: createActionMethod(() => containersApiService.updateAll()),
       /**
        * Check all containers of host
        */
@@ -571,16 +594,18 @@ export const HostsStore = signalStore(
        */
       openJobProgressDialog,
       /**
-       * Poll unified host job state while a host is selected
+       * Load unified host job state while a host is selected
        */
-      pollHostState,
+      loadHostState,
+      watchSocketProgress,
     };
   }),
   withHooks({
     onInit: (store) => {
       effect(() => {
-        store.pollHostState(store.selectedId());
+        store.loadHostState(store.selectedId());
       });
+      store.watchSocketProgress();
     },
   }),
 );

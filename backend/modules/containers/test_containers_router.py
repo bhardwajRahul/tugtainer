@@ -14,7 +14,7 @@ from backend.core.agent_client import (
     AgentClientContainer,
 )
 from backend.db.session import get_async_session
-from backend.modules.auth.auth_util import is_authorized
+from backend.modules.auth.auth_util import is_authorized_req
 from backend.modules.containers.containers_model import (
     ContainersModel,
 )
@@ -28,11 +28,11 @@ base_module = "backend.modules.containers.containers_router"
 client = TestClient(app)
 
 
-async def override_is_authorized():
+async def override_is_authorized_req():
     return True
 
 
-app.dependency_overrides[is_authorized] = override_is_authorized
+app.dependency_overrides[is_authorized_req] = override_is_authorized_req
 
 
 @pytest.mark.asyncio

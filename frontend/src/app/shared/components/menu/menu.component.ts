@@ -19,6 +19,7 @@ import { AppStore } from 'src/app/app.store';
 import { AuthApiService } from 'src/app/features/auth/auth-api.service';
 import { HostsStore } from 'src/app/features/hosts/hosts.store';
 import { BadgeModule } from 'primeng/badge';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { supportedLocales } from 'src/app/app.consts';
 import { localeLabels, TAppLang } from 'src/app/core/services/locale.service';
 
@@ -35,6 +36,7 @@ import { localeLabels, TAppLang } from 'src/app/core/services/locale.service';
     MenuModule,
     RouterLink,
     BadgeModule,
+    ProgressSpinnerModule,
   ],
   templateUrl: './menu.component.html',
   styleUrl: './menu.component.scss',

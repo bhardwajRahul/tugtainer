@@ -34,6 +34,13 @@
               severity="success">
             </p-badge>
           }
+          @if (h.loading || h.jobState?.current) {
+            <p-progress-spinner
+              strokeWidth="4"
+              animationDuration=".5s"
+              [style]="{ width: '20px', height: '20px', 'margin-left': upd ? '10px' : 'auto' }">
+            </p-progress-spinner>
+          }
         </button>
       }
     }
