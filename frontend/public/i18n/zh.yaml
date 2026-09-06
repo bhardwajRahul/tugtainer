@@ -66,9 +66,7 @@ AUTH:
 ACTIONS:
   RESULT: 结果
   PROGRESS: 进度
-  IN_PROGRESS: 进行中
-  QUEUED: 排队中
-  COMPLETED: 已完成
+
   ALL_CONTAINERS: 全部容器
   CHECK_ALL: 全部检查
   UPDATE_ALL: 全部更新

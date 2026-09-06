@@ -66,9 +66,7 @@ AUTH:
 ACTIONS:
   RESULT: Результат
   PROGRESS: Прогресс
-  IN_PROGRESS: Выполняется
-  QUEUED: В очереди
-  COMPLETED: Завершено
+
   ALL_CONTAINERS: Все контейнеры
   CHECK_ALL: Проверить все
   UPDATE_ALL: Обновить все

@@ -19,12 +19,19 @@ import { TagModule } from 'primeng/tag';
 import { AccordionModule } from 'primeng/accordion';
 import { HostJobsResultComponent } from '../host-jobs-result/host-jobs-result.component';
 import { TagSeverity } from '@shared/types/tag-severity.type';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
-export interface IJobsProgressDialogData {
+export interface IJobsProgressHostData {
+  hostId: number;
+  hostName: string;
   current: IJob | null;
   queued: IJob[];
   completed: IJob[];
   pruneResult: string | null;
+}
+
+export interface IJobsProgressDialogData {
+  hosts: IJobsProgressHostData[];
 }
 
 /**
@@ -33,21 +40,27 @@ export interface IJobsProgressDialogData {
  */
 export interface IJobsProgressDialogSource {
   read: () => {
-    jobState?: IHostState | null;
-    pruneResult?: string | null;
-    extraJobs?: IJob[];
+    hosts: {
+      hostId: number;
+      hostName: string;
+      jobState: IHostState | null;
+      pruneResult: string | null;
+    }[];
   };
 }
 
 export function toJobsProgressDialogData(
   state: IHostState | null | undefined,
   pruneResult: string | null,
-  extraJobs: IJob[] = [],
-): IJobsProgressDialogData {
+  hostId = 0,
+  hostName = '',
+): IJobsProgressHostData {
   return {
+    hostId,
+    hostName,
     current: isHostBusy(state) ? (state!.current ?? null) : null,
     queued: state?.queued ?? [],
-    completed: [...(state?.completed ?? []), ...extraJobs],
+    completed: state?.completed ?? [],
     pruneResult,
   };
 }
@@ -60,6 +73,7 @@ export function toJobsProgressDialogData(
     NgTemplateOutlet,
     TranslatePipe,
     TagModule,
+    ProgressSpinnerModule,
   ],
   templateUrl: './jobs-progress-dialog.component.html',
   styleUrl: './jobs-progress-dialog.component.scss',
@@ -69,17 +83,33 @@ export class JobsProgressDialogComponent {
   private readonly dynamicDialogConfig: DynamicDialogConfig<IJobsProgressDialogSource> =
     inject(DynamicDialogConfig);
 
-  protected readonly accordionValue = signal<
-    string | number | string[] | number[] | null
-  >(['current']);
+  private readonly _accordionValues = signal<Record<number, string[]>>({});
 
-  protected readonly data = computed(() => {
-    const snapshot = this.dynamicDialogConfig.data?.read() ?? {};
-    return toJobsProgressDialogData(
-      snapshot.jobState,
-      snapshot.pruneResult ?? null,
-      snapshot.extraJobs ?? [],
-    );
+  protected getAccordionValue(hostId: number): string[] {
+    const vals = this._accordionValues();
+    return vals[hostId] ?? ['current'];
+  }
+
+  protected setAccordionValue(
+    hostId: number,
+    value: string | string[] | number | number[] | null | undefined,
+  ): void {
+    const arr = Array.isArray(value) ? value : value != null ? [value] : [];
+    this._accordionValues.update((v) => ({ ...v, [hostId]: arr as string[] }));
+  }
+
+  protected readonly data = computed<IJobsProgressDialogData>(() => {
+    const snapshot = this.dynamicDialogConfig.data?.read() ?? { hosts: [] };
+    return {
+      hosts: snapshot.hosts.map((h) =>
+        toJobsProgressDialogData(
+          h.jobState,
+          h.pruneResult,
+          h.hostId,
+          h.hostName,
+        ),
+      ),
+    };
   });
 
   protected readonly kindKey: Record<TJobKind, string> = {

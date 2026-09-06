@@ -6,6 +6,7 @@ import {
   model,
   OnDestroy,
   signal,
+  computed,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
@@ -24,7 +25,7 @@ import { FormsModule } from '@angular/forms';
 import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService } from 'primeng/api';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import { hasHostJobsDialog } from '@shared/interfaces/jobs.interface';
+import { shouldIncludeHostToJobsDialog } from '@shared/interfaces/jobs.interface';
 
 @Component({
   selector: 'app-hosts-dashboard',
@@ -67,7 +68,10 @@ export class HostsDashboardComponent implements OnDestroy {
 
   protected readonly childActive = signal<boolean>(false);
   protected readonly pruneAll = model<boolean>(false);
-  protected readonly hasHostJobsDialog = hasHostJobsDialog;
+  protected readonly hasHostJobsDialog = computed(() => {
+    const host = this.hostsStore.selected();
+    return shouldIncludeHostToJobsDialog(host?.jobState, host?.pruneResult);
+  });
 
   constructor() {
     this.activatedRoute.params

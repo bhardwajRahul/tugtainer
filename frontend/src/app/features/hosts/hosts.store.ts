@@ -30,7 +30,7 @@ import { tapResponse } from '@ngrx/operators';
 import {
   IHostState,
   isHostBusy,
-  IJob,
+  shouldIncludeHostToJobsDialog,
 } from '@shared/interfaces/jobs.interface';
 import { ContainersApiService } from '../containers/containers-api.service';
 import { IHostSummary } from '../public/public-interface';
@@ -400,29 +400,34 @@ export const HostsStore = signalStore(
           read: () => {
             if (source.global) {
               const entities = store.entities();
-              const extraJobs: IJob[] = [];
+              const hosts = [];
               for (const host of entities) {
-                if (host.jobState?.current) {
-                  extraJobs.push(host.jobState.current);
-                }
-                if (host.jobState?.queued) {
-                  extraJobs.push(...host.jobState.queued);
-                }
-                if (host.jobState?.completed) {
-                  extraJobs.push(...host.jobState.completed);
+                if (
+                  shouldIncludeHostToJobsDialog(host.jobState, host.pruneResult)
+                ) {
+                  hosts.push({
+                    hostId: host.id,
+                    hostName: host.name,
+                    jobState: host.jobState ?? null,
+                    pruneResult: host.pruneResult ?? null,
+                  });
                 }
               }
-              return {
-                jobState: null,
-                pruneResult: null,
-                extraJobs,
-              };
+              return { hosts };
             }
             const entity =
               source.hostId != null ? store.entityMap()[source.hostId] : null;
             return {
-              jobState: entity?.jobState ?? null,
-              pruneResult: entity?.pruneResult ?? null,
+              hosts: entity
+                ? [
+                    {
+                      hostId: entity.id,
+                      hostName: entity.name,
+                      jobState: entity.jobState ?? null,
+                      pruneResult: entity.pruneResult ?? null,
+                    },
+                  ]
+                : [],
             };
           },
         },

@@ -90,7 +90,7 @@ export function containerJobSlot(
   return undefined;
 }
 
-export function hasHostJobsDialog(
+export function shouldIncludeHostToJobsDialog(
   state: IHostState | null | undefined,
   pruneResult?: string | null,
 ): boolean {
