@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from aiohttp.client_exceptions import ClientError
 from fastapi import FastAPI, HTTPException, Request, status
+from fastapi.middleware.cors import CORSMiddleware
 
 from backend.config import Config
 from backend.core.agent_client import (
@@ -71,6 +72,15 @@ app.include_router(public_router)
 app.include_router(settings_router)
 app.include_router(images_router)
 app.include_router(hosts_router)
+
+if Config.ALLOW_ORIGINS:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=Config.ALLOW_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 socket_manager.init_socket(app)
 

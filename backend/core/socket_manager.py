@@ -8,6 +8,7 @@ import socketio
 from fastapi import FastAPI, HTTPException
 from fastapi.encoders import jsonable_encoder
 
+from backend.config import Config
 from backend.modules.auth.auth_util import is_authorized_cookies
 
 logger = logging.getLogger("socket_manager")
@@ -55,7 +56,7 @@ class SocketManagerSingleton:
     def init_socket(self, app: FastAPI) -> None:
         sio = socketio.AsyncServer(
             async_mode="asgi",
-            cors_allowed_origins="*",
+            cors_allowed_origins=Config.ALLOW_ORIGINS,
             cors_credentials=True,
             json=FastApiJson,
         )

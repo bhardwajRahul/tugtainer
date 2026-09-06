@@ -39,7 +39,7 @@ These are not treated as vulnerabilities (and will not be accepted as High):
   `docker run --dns=…`) to demonstrate a rebind
 - Hooks executing the commands the admin configured (`ALLOW_HOOKS` /
   `ALLOW_EXEC` are opt-in by design)
-- Default cookie flags (`HTTPS`, `DOMAIN`) that the operator can tighten
+- Default cookie flags (`HTTPS`, `DOMAIN`) and CORS settings (`ALLOW_ORIGINS`) that the operator can tighten
 - Issues that exist only with explicit opt-outs (`DISABLE_AUTH`,
   `ALLOW_UNAUTHENTICATED_AGENT`, `ENABLE_PUBLIC_API`)
 
