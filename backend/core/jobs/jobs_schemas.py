@@ -36,10 +36,3 @@ class HostState(TypedDict, total=False):
     current: Job | None
     queued: list[Job]
     completed: list[Job]
-
-
-class AllHostsState(TypedDict, total=False):
-    """Global check/update cache (key ALL_HOSTS_CACHE_KEY)."""
-
-    status: EJobStatus
-    hosts: dict[int, Job]

@@ -45,14 +45,7 @@ export interface IHostState {
   completed?: IJob[];
 }
 
-export interface IAllHostsState {
-  status: EJobStatus;
-  hosts?: Record<string, IJob>;
-}
-
-export function isHostBusy(
-  state: IHostState | IAllHostsState | null | undefined,
-): boolean {
+export function isHostBusy(state: IHostState | null | undefined): boolean {
   return Boolean(
     state?.status &&
     ![EJobStatus.DONE, EJobStatus.ERROR].includes(state.status),

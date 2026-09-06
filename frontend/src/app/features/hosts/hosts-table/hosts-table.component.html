@@ -3,7 +3,7 @@
     <p-button
       icon="pi pi-refresh"
       text
-      [loading]="hostsStore.loading() === 'loading'"
+      [loading]="hostsStore.loading()"
       [disabled]="hostsStore.loading()"
       (onClick)="hostsStore.loadList()">
     </p-button>
@@ -38,17 +38,17 @@
       <p-button-group>
         <p-button
           severity="primary"
-          [loading]="hostsStore.loading() === 'check'"
+          [loading]="hostsStore.globalCheckActive()"
           [label]="'ACTIONS.CHECK_ALL' | translate"
-          [disabled]="hostsStore.loading()"
+          [disabled]="hostsStore.loading() || hostsStore.globalActionActive()"
           (onClick)="hostsStore.checkAll()">
         </p-button>
 
         <p-button
           severity="success"
-          [loading]="hostsStore.loading() === 'update'"
+          [loading]="hostsStore.globalUpdateActive()"
           [label]="'ACTIONS.UPDATE_ALL' | translate"
-          [disabled]="hostsStore.loading() || !hostsStore.anyForUpdate()"
+          [disabled]="hostsStore.loading() || hostsStore.globalActionActive() || !hostsStore.anyForUpdate()"
           (onClick)="hostsStore.updateAll()">
         </p-button>
       </p-button-group>

@@ -16,7 +16,6 @@ import {
   IHostUpdate,
 } from './hosts.interface';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { IAllHostsState } from '@shared/interfaces/jobs.interface';
 import { IPruneImageRequestBodySchema } from '../images/images.interface';
 import { Mocked } from 'vitest';
 import { getToastServiceMock } from '@testing/mocks/toast-service.mock';
@@ -280,20 +279,12 @@ describe('HostsStore', () => {
 
   describe('checkAll', () => {
     it('should check all hosts', () => {
-      containersApiServiceMock.checkAll.mockReturnValue(of('cache-id'));
-      containersApiServiceMock.watchJobState.mockReturnValue(
-        of({
-          status: 'DONE',
-          hosts: {},
-        } as IAllHostsState),
-      );
+      containersApiServiceMock.checkAll.mockReturnValue(of(undefined));
 
       store.checkAll();
 
       expect(containersApiServiceMock.checkAll).toHaveBeenCalled();
-      expect(containersApiServiceMock.watchJobState).toHaveBeenCalledWith(
-        'cache-id',
-      );
+      expect(dialogServiceMock.open).toHaveBeenCalled();
     });
 
     it('should show error on checkAll failure', () => {
