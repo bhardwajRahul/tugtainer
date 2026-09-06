@@ -17,41 +17,51 @@ describe('JobsProgressDialogComponent', () => {
   let fixture: ComponentFixture<JobsProgressDialogComponent>;
   let source: ReturnType<
     typeof signal<{
-      jobState?: IHostState | null;
-      pruneResult?: string | null;
+      hosts: {
+        hostId: number;
+        hostName: string;
+        jobState: IHostState | null;
+        pruneResult: string | null;
+      }[];
     }>
   >;
   let dynamicDialogConfigMock: DynamicDialogConfig<IJobsProgressDialogSource>;
 
   beforeEach(async () => {
     source = signal({
-      jobState: {
-        status: EJobStatus.CHECKING,
-        current: {
-          kind: 'check' as const,
-          names: ['a'],
-          status: EJobStatus.CHECKING,
-          host_name: 'test',
-          containers: {
-            a: { status: EJobStatus.CHECKING },
+      hosts: [
+        {
+          hostId: 1,
+          hostName: 'test',
+          jobState: {
+            status: EJobStatus.CHECKING,
+            current: {
+              kind: 'check' as const,
+              names: ['a'],
+              status: EJobStatus.CHECKING,
+              host_name: 'test',
+              containers: {
+                a: { status: EJobStatus.CHECKING },
+              },
+              log: [
+                'BACKEND - INFO - run_check_container_job.a: Checking container',
+              ],
+            },
+            queued: [{ kind: 'update' as const, names: ['c', 'd'] }],
+            completed: [
+              {
+                kind: 'check' as const,
+                names: ['x'],
+                status: EJobStatus.DONE,
+                host_id: 1,
+                host_name: 'test',
+                containers: {},
+              },
+            ],
           },
-          log: [
-            'BACKEND - INFO - run_check_container_job.a: Checking container',
-          ],
+          pruneResult: 'test',
         },
-        queued: [{ kind: 'update' as const, names: ['c', 'd'] }],
-        completed: [
-          {
-            kind: 'check' as const,
-            names: ['x'],
-            status: EJobStatus.DONE,
-            host_id: 1,
-            host_name: 'test',
-            containers: {},
-          },
-        ],
-      },
-      pruneResult: 'test',
+      ],
     });
     dynamicDialogConfigMock = {
       data: {
@@ -84,19 +94,25 @@ describe('JobsProgressDialogComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('c, d');
 
     source.set({
-      jobState: {
-        status: EJobStatus.DONE,
-        completed: [
-          {
-            kind: 'update',
-            names: ['new-container'],
+      hosts: [
+        {
+          hostId: 1,
+          hostName: 'test',
+          jobState: {
             status: EJobStatus.DONE,
-            host_name: 'test',
-            containers: {},
+            completed: [
+              {
+                kind: 'update',
+                names: ['new-container'],
+                status: EJobStatus.DONE,
+                host_name: 'test',
+                containers: {},
+              },
+            ],
           },
-        ],
-      },
-      pruneResult: null,
+          pruneResult: null,
+        },
+      ],
     });
     fixture.detectChanges();
 
