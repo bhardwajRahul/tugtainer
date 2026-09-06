@@ -1,6 +1,9 @@
 # CHANGELOG
 
 
+## v1.39.0 (2026-09-06)
+
+
 ## v1.38.0 (2026-09-04)
 
 ### Bug Fixes
@@ -10,8 +13,15 @@
 
 ### Features
 
+- Configurable CORS
+  ([`f384b6d`](https://github.com/Quenary/tugtainer/commit/f384b6d02597b2bec7732c597c4c076449e828cf))
+
 - Display current version on container card from labels
   ([`12ee703`](https://github.com/Quenary/tugtainer/commit/12ee703c3a455e43548bbf1bccf9f446be6505e8))
+
+- Implement real-time job progress tracking via WebSockets and refactor authentication dependency
+  injection
+  ([`9bd8df8`](https://github.com/Quenary/tugtainer/commit/9bd8df82eab818bc46a401d5468a8196259868b5))
 
 
 ## v1.37.0 (2026-09-03)
