@@ -40,11 +40,6 @@ export interface HostState {
   completed?: Job[];
 }
 
-export interface AllHostsState {
-  status: JobStatus;
-  hosts?: Record<string, Job>;
-}
-
 export function latestJob(
   state: HostState | null | undefined,
 ): Job | undefined {

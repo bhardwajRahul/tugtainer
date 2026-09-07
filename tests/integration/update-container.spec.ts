@@ -48,6 +48,12 @@ test.describe('update container with extra network', () => {
         `${outdatedAlpineExtraNetwork.linkTargetName}:${outdatedAlpineExtraNetwork.linkAlias}`,
       ]),
     );
+    expect(before.HostConfig.ExtraHosts).toEqual(
+      expect.arrayContaining([
+        'host.docker.internal:host-gateway',
+        'test.local:127.0.0.1',
+      ]),
+    );
 
     const names = [outdatedAlpineExtraNetwork.name];
     const checkWatch = await watchHostJobs(request, host.id);
@@ -101,6 +107,12 @@ test.describe('update container with extra network', () => {
     expect(afterEndpoint.Links).toEqual(
       expect.arrayContaining([
         `${outdatedAlpineExtraNetwork.linkTargetName}:${outdatedAlpineExtraNetwork.linkAlias}`,
+      ]),
+    );
+    expect(after.HostConfig.ExtraHosts).toEqual(
+      expect.arrayContaining([
+        'host.docker.internal:host-gateway',
+        'test.local:127.0.0.1',
       ]),
     );
   });

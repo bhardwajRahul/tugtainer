@@ -24,15 +24,11 @@ class ContainersModel(BaseModel):
 
     __tablename__ = "containers"
 
-    id: Mapped[int] = mapped_column(
-        Integer, primary_key=True, nullable=False
-    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
     host_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("hosts.id"), nullable=False
     )
-    name: Mapped[str] = mapped_column(
-        String, index=True, nullable=False
-    )
+    name: Mapped[str] = mapped_column(String, index=True, nullable=False)
     check_enabled: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,
@@ -51,12 +47,8 @@ class ContainersModel(BaseModel):
         default=False,
         server_default=text("FALSE"),
     )
-    checked_at: Mapped[datetime | None] = mapped_column(
-        DateTime, nullable=True
-    )
-    updated_at: Mapped[datetime | None] = mapped_column(
-        DateTime, nullable=True
-    )
+    checked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     # When remote digests were last observed to change.
     # Used with DELAY_UPDATE_FOR / delay_update_for for scheduled updates.
     # Never cleared — always reflects the last digest change time.
@@ -64,9 +56,9 @@ class ContainersModel(BaseModel):
         DateTime, nullable=True
     )
     # Per-container override of DELAY_UPDATE_FOR (seconds). None = use global.
-    delay_update_for: Mapped[int | None] = mapped_column(
-        Integer, nullable=True
-    )
+    delay_update_for: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Per-container override of healthcheck timeout (seconds). None = use host's default.
+    healthcheck_timeout: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         server_default=text("CURRENT_TIMESTAMP"),
@@ -126,6 +118,4 @@ class ContainersModel(BaseModel):
         nullable=True,
     )
 
-    host: Mapped["HostsModel"] = relationship(
-        "HostsModel", back_populates="containers"
-    )
+    host: Mapped["HostsModel"] = relationship("HostsModel", back_populates="containers")

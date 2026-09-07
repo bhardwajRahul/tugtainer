@@ -30,6 +30,7 @@ export interface IContainerListItem {
   updated_at: string;
   remote_digests_changed_at: string | null;
   delay_update_for: number | null;
+  healthcheck_timeout: number | null;
   /**
    * Image the container ran before the last successful update.
    * Digests pin the exact image, tags and version are informational.
@@ -95,6 +96,7 @@ export interface IContainerPatchBody {
   check_enabled?: boolean;
   update_enabled?: boolean;
   delay_update_for?: number | null;
+  healthcheck_timeout?: number | null;
   hooks?: IContainerHooks;
 }
 /**

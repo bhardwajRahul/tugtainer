@@ -175,6 +175,10 @@ CONTAINERS:
     Override the global delay for this container (seconds).
     Empty = use the global setting. Example: 86400 = 1 day.
     Manual updates ignore the delay.
+  HEALTHCHECK_TIMEOUT: Healthcheck timeout, in seconds
+  HEALTHCHECK_TIMEOUT_HINT: |-
+    Override the host's default healthcheck timeout for this container (seconds).
+    Empty = use the host's setting.
   PREVIOUS_IMAGE: Previous image
   PREVIOUS_IMAGE_HINT: |-
     Image the container ran before its last update.
