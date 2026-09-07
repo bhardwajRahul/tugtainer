@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v1.40.0 (2026-09-07)
+
+### Bug Fixes
+
+- **backend**: Preserve extra_hosts on update
+  ([`e2dbc49`](https://github.com/Quenary/tugtainer/commit/e2dbc4992f0c0a951eb08bff4a0937aa9e213cde))
+
+### Features
+
+- Add per-container healthcheck timeout
+  ([`1938a9c`](https://github.com/Quenary/tugtainer/commit/1938a9cd1b23d7eebc7b19b10afc6c9f87e86579))
+
+
 ## v1.39.0 (2026-09-06)
 
 
